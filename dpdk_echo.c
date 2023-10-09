@@ -279,10 +279,10 @@ static void run_client(uint8_t port)
 			nb_rx = rte_eth_rx_burst(port, 0, bufs, BURST_SIZE);
 			time_received = rte_get_timer_cycles();
 			if (nb_rx == 0)
-				printf("no packets received!")
+				printf("no packets received!");
 				continue;
 
-			print("got a packet back!");
+			printf("got a packet back!");
 			for (i = 0; i < nb_rx; i++) {
 				buf = bufs[i];
 
