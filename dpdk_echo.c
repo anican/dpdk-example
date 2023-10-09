@@ -281,7 +281,7 @@ static void run_client(uint8_t port)
 			if (nb_rx == 0)
 				continue;
 
-			print("got a packet back!");
+			printf("got a packet back!");
 			for (i = 0; i < nb_rx; i++) {
 				buf = bufs[i];
 
