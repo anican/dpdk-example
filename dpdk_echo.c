@@ -337,9 +337,9 @@ static void run_client(uint8_t port)
  */
 static int run_server()
 {
-    uint8_t port = dpdk_port; // Set the port to the one specified in dpdk_port
-    struct rte_mbuf *rx_bufs[BURST_SIZE]; // Create an array of pointers to received mbufs (dpdk network packets)
-    uint16_t nb_rx; // Number of received packets
+    uint8_t port = dpdk_port;
+    struct rte_mbuf *rx_bufs[BURST_SIZE];
+    uint16_t nb_rx;
 
     printf("\nCore %u running in server mode. [Ctrl+C to quit]\n",
            rte_lcore_id());
@@ -347,53 +347,49 @@ static int run_server()
     /* Run until the application is quit or killed. */
     for (;;) {
         /* receive packets */
-        nb_rx = rte_eth_rx_burst(port, 0, rx_bufs, BURST_SIZE); // Receive packets into rx_bufs array, returns number of retrieved packets
-		// in prinicipal, rx should always be 1?
+        nb_rx = rte_eth_rx_burst(port, 0, rx_bufs, BURST_SIZE);
 
-        if (nb_rx == 0) // If no packets were received, continue to the next iteration
+        if (nb_rx == 0)
             continue;
 
-        printf("received a packet!\n"); 
-		
-		/* TODO: YOUR CODE HERE */
+        printf("received a packet!\n");
 
-        for (uint16_t i = 0; i < nb_rx; i++) { // Loop through the received packets
-            struct rte_mbuf *buf = rx_bufs[i]; // Pointer to current received packet
-            
-            // Get the total packet length
+        for (uint16_t i = 0; i < nb_rx; i++) {
+            struct rte_mbuf *buf = rx_bufs[i];
+
+            /* Get the total packet length */
             uint16_t packet_len = rte_pktmbuf_pkt_len(buf);
 
-            // Create a new mbuf for the packet we are sending back
+            /* Create a new mbuf for the echoed packet */
             struct rte_mbuf *echo_buf = rte_pktmbuf_alloc(tx_mbuf_pool);
 
-            if (echo_buf != NULL) { // check alloc success
-                // Copy the received packet's data to the echoed packet
-				// `rte_pktmbuf_mtod` is a macro that points to the memory start address of the DATA in an mbuf
-				// memcpy(void * dst, void *src, n_bytes)
+            if (echo_buf != NULL) {
+                /* Copy the received packet's data to the echoed packet */
                 rte_memcpy(rte_pktmbuf_mtod(echo_buf, void *), rte_pktmbuf_mtod(buf, void *), packet_len);
 
-                /* Set the Ethernet destination and source addresses */
+                /* Set the Ethernet destination and source addresses to swap them */
                 struct rte_ether_hdr *eth_hdr = rte_pktmbuf_mtod(echo_buf, struct rte_ether_hdr *);
-                rte_ether_addr_copy(&my_eth, &eth_hdr->dst_addr); // Set destination address
-                rte_ether_addr_copy(&my_eth, &eth_hdr->src_addr); // Set source address
-
+                rte_ether_addr_copy(&eth_hdr->src_addr, &eth_hdr->dst_addr); // Destination becomes source
+                rte_ether_addr_copy(&my_eth, &eth_hdr->src_addr); // Source becomes destination
+				printf("sending packet %d!\n", i);
                 /* Send the echoed packet */
-                int nb_tx = rte_eth_tx_burst(port, 0, &echo_buf, 1); // Transmit the echoed packet
+                int nb_tx = rte_eth_tx_burst(port, 0, &echo_buf, 1);
 
                 if (unlikely(nb_tx != 1)) {
-                    printf("error: could not send echoed packet\n"); // Print an error message if the echoed packet couldn't be sent
+                    printf("error: could not send echoed packet\n");
                 }
 
                 /* Free the original received packet */
-                rte_pktmbuf_free(buf); // Free the memory of the original received packet
+                rte_pktmbuf_free(buf);
             } else {
-                printf("error allocating tx mbuf\n"); 
+                printf("error allocating tx mbuf\n");
             }
         }
     }
 
     return 0;
 }
+
 
 
 /*
@@ -501,3 +497,4 @@ main(int argc, char *argv[])
 
 	return 0;
 }
+
