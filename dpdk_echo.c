@@ -340,6 +340,7 @@ static int run_server()
 {
     uint8_t port = dpdk_port;
     struct rte_mbuf *rx_bufs[BURST_SIZE];
+	struct rte_mbuf *buf; 
     uint16_t nb_rx;
 	struct rte_ether_hdr *eth_hdr;
 	struct rte_ipv4_hdr *ipv4_hdr;
@@ -360,7 +361,7 @@ static int run_server()
 
 		for (uint16_t i = 0; i < nb_rx; i++) {
 			// reuse the old buffer, 
-            struct rte_mbuf *buf = rx_bufs[i];
+            buf = rx_bufs[i];
             eth_hdr = rte_pktmbuf_mtod(buf, struct rte_ether_hdr *);
             ipv4_hdr = (struct rte_ipv4_hdr *)(eth_hdr + 1);
             udp_hdr = (struct rte_udp_hdr *)(ipv4_hdr + 1);
