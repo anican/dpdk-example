@@ -342,8 +342,8 @@ static int run_server()
     struct rte_mbuf *rx_bufs[BURST_SIZE];
     uint16_t nb_rx;
 	struct rte_ether_hdr *eth_hdr;
-		struct rte_ipv4_hdr *ipv4_hdr;
-		struct rte_udp_hdr *udp_hdr;
+	struct rte_ipv4_hdr *ipv4_hdr;
+	struct rte_udp_hdr *udp_hdr;
 
     printf("\nCore %u running in server mode. [Ctrl+C to quit]\n",
            rte_lcore_id());
@@ -366,8 +366,8 @@ static int run_server()
             udp_hdr = (struct rte_udp_hdr *)(ipv4_hdr + 1);
 
             // Swap Ethernet source and destination MAC addresses
-            rte_ether_addr_copy(&eth_hdr->s_addr, &eth_hdr->d_addr);
-            rte_ether_addr_copy(&eth_hdr->s_addr, &eth_hdr->s_addr);
+            rte_ether_addr_copy(&eth_hdr->src_addr, &eth_hdr->dst_addr);
+            rte_ether_addr_copy(&eth_hdr->src_addr, &eth_hdr->src_addr);
 
             // Swap IP source and destination addresses
             uint32_t tmp_addr = ipv4_hdr->src_addr;
