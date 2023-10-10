@@ -281,7 +281,7 @@ static void run_client(uint8_t port)
 			if (nb_rx == 0)
 				continue;
 
-			printf("got a packet back!");
+			// printf("got a packet back!");
 			for (i = 0; i < nb_rx; i++) {
 				buf = bufs[i];
 
@@ -356,7 +356,7 @@ static int run_server()
         if (nb_rx == 0)
             continue;
 
-        printf("received a packet!\n");
+        // printf("received a packet!\n");
 
 		for (uint16_t i = 0; i < nb_rx; i++) {
 			// reuse the old buffer, 
