@@ -279,7 +279,6 @@ static void run_client(uint8_t port)
 			nb_rx = rte_eth_rx_burst(port, 0, bufs, BURST_SIZE);
 			time_received = rte_get_timer_cycles();
 			if (nb_rx == 0)
-				printf("no packets received!");
 				continue;
 
 			printf("got a packet back!");
@@ -356,38 +355,31 @@ static int run_server()
 
         printf("received a packet!\n");
 
-        for (uint16_t i = 0; i < nb_rx; i++) {
-            struct rte_mbuf *buf = rx_bufs[i];
+		for (uint16_t i = 0; i < nb_rx; i++) {
+			// reuse the old buffer, 
+            struct rte_mbuf *buf = bufs[i];
+            eth_hdr = rte_pktmbuf_mtod(buf, struct rte_ether_hdr *);
+            ipv4_hdr = (struct rte_ipv4_hdr *)(eth_hdr + 1);
+            udp_hdr = (struct rte_udp_hdr *)(ipv4_hdr + 1);
 
-            /* Get the total packet length */
-            uint16_t packet_len = rte_pktmbuf_pkt_len(buf);
+            // Swap Ethernet source and destination MAC addresses
+            rte_ether_addr_copy(&eth_hdr->s_addr, &eth_hdr->d_addr);
+            rte_ether_addr_copy(&eth_hdr->s_addr, &eth_hdr->s_addr);
 
-            /* Create a new mbuf for the echoed packet */
-            struct rte_mbuf *echo_buf = rte_pktmbuf_alloc(tx_mbuf_pool);
+            // Swap IP source and destination addresses
+            uint32_t tmp_addr = ipv4_hdr->src_addr;
+            ipv4_hdr->src_addr = ipv4_hdr->dst_addr;
+            ipv4_hdr->dst_addr = tmp_addr;
 
-            if (echo_buf != NULL) {
-                /* Copy the received packet's data to the echoed packet */
-                rte_memcpy(rte_pktmbuf_mtod(echo_buf, void *), rte_pktmbuf_mtod(buf, void *), packet_len);
+            // Swap UDP source and destination ports
+            uint16_t tmp_port = udp_hdr->src_port;
+            udp_hdr->src_port = udp_hdr->dst_port;
+            udp_hdr->dst_port = tmp_port;
 
-                /* Set the Ethernet destination and source addresses to swap them */
-                struct rte_ether_hdr *eth_hdr = rte_pktmbuf_mtod(echo_buf, struct rte_ether_hdr *);
-                rte_ether_addr_copy(&eth_hdr->src_addr, &eth_hdr->dst_addr); // Destination becomes source
-                rte_ether_addr_copy(&my_eth, &eth_hdr->src_addr); // Source becomes destination
-				printf("sending packet %d!\n", i);
-                /* Send the echoed packet */
-                int nb_tx = rte_eth_tx_burst(port, 0, &echo_buf, 1);
-
-                if (unlikely(nb_tx != 1)) {
-                    printf("error: could not send echoed packet\n");
-                }
-
-                /* Free the original received packet */
-                rte_pktmbuf_free(buf);
-            } else {
-                printf("error allocating tx mbuf\n");
-            }
+            // Send the packet back
+            rte_eth_tx_burst(port, 0, &buf, 1);
         }
-    }
+	}
 
     return 0;
 }
