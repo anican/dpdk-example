@@ -366,16 +366,16 @@ static int run_server()
             ipv4_hdr = (struct rte_ipv4_hdr *)(eth_hdr + 1);
             udp_hdr = (struct rte_udp_hdr *)(ipv4_hdr + 1);
 
-            // Swap Ethernet source and destination MAC addresses
+            // Swap Ethernet source and destination MAC addresses (layer 2)
             rte_ether_addr_copy(&eth_hdr->src_addr, &eth_hdr->dst_addr);
             rte_ether_addr_copy(&eth_hdr->src_addr, &eth_hdr->src_addr);
 
-            // Swap IP source and destination addresses
+            // Swap IP source and destination addresses (layer 3)
             uint32_t tmp_addr = ipv4_hdr->src_addr;
             ipv4_hdr->src_addr = ipv4_hdr->dst_addr;
             ipv4_hdr->dst_addr = tmp_addr;
 
-            // Swap UDP source and destination ports
+            // Swap UDP source and destination ports (layer 4)
             uint16_t tmp_port = udp_hdr->src_port;
             udp_hdr->src_port = udp_hdr->dst_port;
             udp_hdr->dst_port = tmp_port;
